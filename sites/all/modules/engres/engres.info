@@ -1,0 +1,5 @@
+name = engres
+description = engres is the engagment agency resource load module
+package = the engagement agency
+core = 7.x
+

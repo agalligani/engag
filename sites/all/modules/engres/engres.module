@@ -1,0 +1,109 @@
+<?php
+/*
+ * hook_menu
+ */
+ 
+function engres_menu() {
+$items = array();
+
+$items['resources'] = array(
+	'page callback' => 'engres_show_resources',
+	'access callback' => 'user_access',
+);
+
+return $items;
+
+} 
+
+/*
+ *  hook_block_info
+ */
+ 
+function engres_block_info() {
+
+  $blocks['resources'] = array(
+      'info' => t('[engres] Engagement Resources'),
+          // DRUPAL_CACHE_PER_ROLE will be assumed.
+  );
+
+  return $blocks;
+  
+}
+
+
+function engres_block_configure($delta = '') {
+  // This example comes from node.module.
+  $form = array();
+  switch ($delta) {
+
+    case 'resources':
+
+      $form['resources_count'] = array(
+          '#type' => 'select',
+          '#title' => t('Number of items to display'),
+          '#default_value' => variable_get('resources_block_count', 40),
+          '#options' => drupal_map_assoc(array(4, 8, 12, 16, 20, 24, 28, 32, 36, 40)),
+      );
+
+      break;
+		}
+		return $form;
+	}
+	
+function engres_block_save($delta = '', $edit = array()) {
+  // This example comes from node.module.
+
+  switch ($delta) {
+    case 'resources':
+      variable_set('resources_block_count', $edit['resources_block_count']);
+      break;
+  }
+}
+
+
+function engres_block_view($delta = '') {
+  // This example is adapted from node.module.
+  $block = array();
+
+  switch ($delta) {
+
+    case 'resources':
+      $node_limit = variable_get('resources_block_count', 8);
+      $content_type = 'resource';
+      $query = db_query('SELECT n.nid FROM {node} n WHERE n.type = :type AND n.status = 1 ORDER BY n.created DESC LIMIT 0, ' . $node_limit, array(':type' => $content_type));
+      $nids = $query->fetchCol();
+      $nodes = node_load_multiple($nids);
+
+
+
+      if (!empty($nodes)) {
+        $block['content'] = array(
+            '#theme' => 'resources',
+            '#nodes' => $nodes,
+            '#title' => engres_block_get_title($delta),
+        );
+      }
+
+      break;
+      
+  }
+  
+  return $block;
+}
+
+function engres_theme($existing, $type, $theme, $path) {
+  return array(
+      'resources' => array(
+          'variables' => array('nodes' => NULL, 'title' => NULL),
+          'template' => 'resources',
+      ),
+  );
+}
+
+
+function engres_block_get_title($delta) {
+  $block = db_query('SELECT title FROM {block} WHERE delta = :delta', array(':delta' => $delta))->fetchObject();
+
+  return $block->title ? $block->title : '';
+}
+
